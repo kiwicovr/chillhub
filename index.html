@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChillHub</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f2f5;
+    }
+    header {
+      background-color: #111;
+      color: white;
+      padding: 1em;
+      text-align: center;
+      font-size: 1.5em;
+    }
+    .container {
+      max-width: 600px;
+      margin: 2em auto;
+      padding: 1em;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    form textarea, form input[type="file"] {
+      width: 100%;
+      margin: 0.5em 0;
+    }
+    button {
+      padding: 0.5em 1em;
+      background-color: #1877f2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .post {
+      border-bottom: 1px solid #ccc;
+      padding: 1em 0;
+    }
+    .post img {
+      max-width: 100%;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header>ChillHub</header>
+  <div class="container">
+    <form id="postForm">
+      <textarea id="postText" rows="3" placeholder="Scrivi qualcosa..."></textarea>
+      <input type="file" id="postImage" accept="image/*">
+      <button type="submit">Pubblica</button>
+    </form>
+    <div id="feed"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('postForm');
+    const feed = document.getElementById('feed');
+
+    function renderPosts() {
+      const posts = JSON.parse(localStorage.getItem('posts')) || [];
+      feed.innerHTML = '';
+      posts.reverse().forEach(post => {
+        const div = document.createElement('div');
+        div.className = 'post';
+        if (post.text) {
+          const p = document.createElement('p');
+          p.textContent = post.text;
+          div.appendChild(p);
+        }
+        if (post.image) {
+          const img = document.createElement('img');
+          img.src = post.image;
+          div.appendChild(img);
+        }
+        feed.appendChild(div);
+      });
+    }
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const text = document.getElementById('postText').value;
+      const imageInput = document.getElementById('postImage');
+      let imageData = '';
+
+      if (imageInput.files.length > 0) {
+        const file = imageInput.files[0];
+        imageData = await toBase64(file);
+      }
+
+      const newPost = { text, image: imageData };
+      const posts = JSON.parse(localStorage.getItem('posts')) || [];
+      posts.push(newPost);
+      localStorage.setItem('posts', JSON.stringify(posts));
+      form.reset();
+      renderPosts();
+    });
+
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    renderPosts();
+  </script>
+</body>
+</html>
