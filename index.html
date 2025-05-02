@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ChillHub</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Aggiungi i link per Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800">
   <header class="bg-white shadow p-4 sticky top-0 z-10">
@@ -25,39 +27,89 @@
   </main>
 
   <script>
-    function createPost() {
+    // Configura Firebase
+    import { initializeApp } from "firebase/app";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "firebase/firestore";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBjRHhzoHQQxQv2NPUn5dLFgI8F1Pixz9o",
+      authDomain: "chillhub-2-0.firebaseapp.com",
+      databaseURL: "https://chillhub-2-0-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "chillhub-2-0",
+      storageBucket: "chillhub-2-0.firebasestorage.app",
+      messagingSenderId: "405046204153",
+      appId: "1:405046204153:web:4c1732295d08f57b41b428",
+      measurementId: "G-MCQ3VLJHDD"
+    };
+
+    // Inizializza Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function createPost() {
       const text = document.getElementById("postText").value.trim();
       const imageInput = document.getElementById("imageInput");
       const feed = document.getElementById("feed");
 
-      const post = document.createElement("div");
-      post.className = "bg-white rounded-xl shadow p-4";
+      const post = {
+        text: text,
+        image: imageInput.files.length > 0 ? await toBase64(imageInput.files[0]) : null,
+        timestamp: new Date().getTime()
+      };
 
-      if (text) {
-        const textEl = document.createElement("p");
-        textEl.className = "mb-2";
-        textEl.textContent = text;
-        post.appendChild(textEl);
+      // Salva il post su Firestore
+      try {
+        await addDoc(collection(db, "posts"), post);
+        loadPosts(); // Ricarica i post
+      } catch (e) {
+        console.error("Errore nell'aggiungere il post: ", e);
       }
 
-      if (imageInput.files.length > 0) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const img = document.createElement("img");
-          img.src = e.target.result;
-          img.className = "w-full rounded";
-          post.appendChild(img);
-        };
-        reader.readAsDataURL(imageInput.files[0]);
-      }
-
-      // Inserisci il post in cima
-      feed.prepend(post);
-
-      // Resetta form
+      // Resetta il form
       document.getElementById("postText").value = "";
       imageInput.value = "";
     }
+
+    async function loadPosts() {
+      const feed = document.getElementById("feed");
+      feed.innerHTML = '';
+
+      const q = query(collection(db, "posts"), orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        const post = doc.data();
+        const postEl = document.createElement("div");
+        postEl.className = "bg-white rounded-xl shadow p-4 mb-4";
+
+        if (post.text) {
+          const textEl = document.createElement("p");
+          textEl.className = "mb-2";
+          textEl.textContent = post.text;
+          postEl.appendChild(textEl);
+        }
+
+        if (post.image) {
+          const img = document.createElement("img");
+          img.src = post.image;
+          img.className = "w-full rounded";
+          postEl.appendChild(img);
+        }
+
+        feed.appendChild(postEl);
+      });
+    }
+
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Carica i post quando la pagina si carica
+    window.onload = loadPosts;
   </script>
 </body>
 </html>
