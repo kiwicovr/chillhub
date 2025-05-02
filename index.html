@@ -1,117 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ChillHub</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f0f2f5;
-    }
-    header {
-      background-color: #111;
-      color: white;
-      padding: 1em;
-      text-align: center;
-      font-size: 1.5em;
-    }
-    .container {
-      max-width: 600px;
-      margin: 2em auto;
-      padding: 1em;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    form textarea, form input[type="file"] {
-      width: 100%;
-      margin: 0.5em 0;
-    }
-    button {
-      padding: 0.5em 1em;
-      background-color: #1877f2;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .post {
-      border-bottom: 1px solid #ccc;
-      padding: 1em 0;
-    }
-    .post img {
-      max-width: 100%;
-      border-radius: 5px;
-    }
-  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <header>ChillHub</header>
-  <div class="container">
-    <form id="postForm">
-      <textarea id="postText" rows="3" placeholder="Scrivi qualcosa..."></textarea>
-      <input type="file" id="postImage" accept="image/*">
-      <button type="submit">Pubblica</button>
-    </form>
-    <div id="feed"></div>
-  </div>
+<body class="bg-gray-100 font-sans text-gray-800">
+  <header class="bg-white shadow p-4 sticky top-0 z-10">
+    <h1 class="text-2xl font-bold text-center text-indigo-600">ChillHub</h1>
+  </header>
+
+  <main class="max-w-xl mx-auto mt-6 px-4">
+    <!-- Form di pubblicazione -->
+    <div class="bg-white rounded-xl shadow p-4 mb-6">
+      <h2 class="text-lg font-semibold mb-2">Crea un nuovo post</h2>
+      <textarea id="postText" class="w-full border rounded p-2 mb-2" rows="3" placeholder="Scrivi qualcosa..."></textarea>
+      <input type="file" id="imageInput" accept="image/*" class="mb-2">
+      <button onclick="createPost()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">Pubblica</button>
+    </div>
+
+    <!-- Feed dei post -->
+    <div id="feed" class="space-y-4"></div>
+  </main>
 
   <script>
-    const form = document.getElementById('postForm');
-    const feed = document.getElementById('feed');
+    function createPost() {
+      const text = document.getElementById("postText").value.trim();
+      const imageInput = document.getElementById("imageInput");
+      const feed = document.getElementById("feed");
 
-    function renderPosts() {
-      const posts = JSON.parse(localStorage.getItem('posts')) || [];
-      feed.innerHTML = '';
-      posts.reverse().forEach(post => {
-        const div = document.createElement('div');
-        div.className = 'post';
-        if (post.text) {
-          const p = document.createElement('p');
-          p.textContent = post.text;
-          div.appendChild(p);
-        }
-        if (post.image) {
-          const img = document.createElement('img');
-          img.src = post.image;
-          div.appendChild(img);
-        }
-        feed.appendChild(div);
-      });
-    }
+      const post = document.createElement("div");
+      post.className = "bg-white rounded-xl shadow p-4";
 
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const text = document.getElementById('postText').value;
-      const imageInput = document.getElementById('postImage');
-      let imageData = '';
-
-      if (imageInput.files.length > 0) {
-        const file = imageInput.files[0];
-        imageData = await toBase64(file);
+      if (text) {
+        const textEl = document.createElement("p");
+        textEl.className = "mb-2";
+        textEl.textContent = text;
+        post.appendChild(textEl);
       }
 
-      const newPost = { text, image: imageData };
-      const posts = JSON.parse(localStorage.getItem('posts')) || [];
-      posts.push(newPost);
-      localStorage.setItem('posts', JSON.stringify(posts));
-      form.reset();
-      renderPosts();
-    });
-
-    function toBase64(file) {
-      return new Promise((resolve, reject) => {
+      if (imageInput.files.length > 0) {
         const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
+        reader.onload = function(e) {
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          img.className = "w-full rounded";
+          post.appendChild(img);
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+      }
 
-    renderPosts();
+      // Inserisci il post in cima
+      feed.prepend(post);
+
+      // Resetta form
+      document.getElementById("postText").value = "";
+      imageInput.value = "";
+    }
   </script>
 </body>
 </html>
+
